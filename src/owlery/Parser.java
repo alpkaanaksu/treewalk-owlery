@@ -27,6 +27,22 @@ public class Parser {
                 return new Expr.Assign(name, value);
             }
             error(colon, "invalid assignment target");
+        } else if (match(TokenType.COLON_COLON)) {
+            // desugar <::> syntax
+            Token colon = previous();
+            if (match(TokenType.MINUS, TokenType.PLUS, TokenType.VERTICAL_BAR, TokenType.DOUBLE_VERTICAL_BAR,
+                    TokenType.SLASH, TokenType.STAR, TokenType.PERCENT, TokenType.AND, TokenType.OR, TokenType.XOR)) {
+                Token op = previous();
+                Expr operand = expression();
+
+                boolean booleanBinary = op.type == TokenType.AND || op.type == TokenType.OR || op.type == TokenType.XOR;
+
+                if (expr instanceof Expr.Variable) {
+                    Token name = ((Expr.Variable) expr).name;
+                    return new Expr.Assign(name, booleanBinary ? new Expr.BooleanBinary(expr, op, operand) :new Expr.Binary(expr, op, operand));
+                }
+                error(colon, "invalid assignment target");
+            }
         }
 
         return expr;
