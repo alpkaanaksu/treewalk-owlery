@@ -15,6 +15,14 @@ public class Parser {
         return assignment();
     }
 
+    private Expr function() {
+        List<Token> params = params();
+        consume(TokenType.ARROW, "expected: '->' in function expression");
+        consume(TokenType.LEFT_BRACE, "expected: method body (block) after '->'");
+        List<Stmt> body = block();
+        return new Expr.Function(params, body);
+    }
+
     private Expr assignment() {
         Expr expr = or();
 
@@ -127,10 +135,35 @@ public class Parser {
             return new Expr.Unary(op, r);
         }
 
-        return primary();
+        return call(); // primary();
+    }
+
+    private Expr call() {
+        Expr expr = primary();
+
+        if (match(TokenType.BANG)) {
+            Token bang = previous();
+            List<Expr> args = arguments();
+            return new Expr.Call(expr, bang, args);
+        }
+
+        return expr;
+    }
+
+    private boolean funcAhead() {
+        int freeze = current;
+        skip(TokenType.IDENTIFIER);
+        if (match(TokenType.ARROW)) {
+            current = freeze;
+            return true;
+        }
+        current = freeze;
+        return false;
     }
 
     private Expr primary() {
+        if (funcAhead()) return function();
+
         if (match(TokenType.FALSE)) return new Expr.Literal(false);
         if (match(TokenType.TRUE)) return new Expr.Literal(true);
         if (match(TokenType.NOTHING)) return new Expr.Literal(null);
@@ -140,7 +173,13 @@ public class Parser {
         }
 
         if (match(TokenType.IDENTIFIER)) {
-            return new Expr.Variable(previous());
+            Token name = previous();
+            if (match(TokenType.LEFT_BRACKET)) {
+                Expr index = expression();
+                consume(TokenType.RIGHT_BRACKET, "expected: ']' after index notation");
+                return new Expr.Index(name, index);
+            }
+            return new Expr.Variable(name);
         }
 
         if (match(TokenType.LEFT_PAREN)) {
@@ -148,8 +187,34 @@ public class Parser {
             consume(TokenType.RIGHT_PAREN, "expected: <)> after grouping expression");
             return new Expr.Grouping(expr);
         }
-
+        System.out.println(peek());
         throw error(peek(), "expected: expression");
+    }
+
+    private List<Expr> expressionList() {
+        List<Expr> exprList = new ArrayList<>();
+
+        if (!check(TokenType.EOS) && !check(TokenType.RIGHT_PAREN))
+        do {
+            exprList.add(expression());
+        } while (match(TokenType.COMMA));
+        return exprList;
+    }
+
+    private List<Expr> arguments() {
+        List<Expr> arguments = new ArrayList<>();
+        while (!check(TokenType.EOS) && !check(TokenType.RIGHT_PAREN) && !isAtEnd()) {
+            arguments.add(expression());
+        }
+        return arguments;
+    }
+
+    private List<Token> params() {
+        List<Token> params = new ArrayList<>();
+        while (!check(TokenType.ARROW)) {
+            params.add(advance());
+        }
+        return params;
     }
 
     private boolean match(TokenType... types) {
@@ -191,6 +256,24 @@ public class Parser {
         throw error(peek(), message);
     }
 
+    private boolean endStatement() {
+        if (check(TokenType.EOS)) {
+            advance();
+            return true;
+        } else if (check(TokenType.RIGHT_BRACE)) {
+            return true;
+        } else if (isAtEnd()) {
+            return true;
+        }
+
+        error(previous(), "exptected: newline or <}> at the end of the statement");
+        return false;
+    }
+
+    private void skip(TokenType type) {
+        while (check(type)) advance();
+    }
+
 
     private static class ParseError extends RuntimeException {}
     private ParseError error(Token token, String message) {
@@ -217,6 +300,7 @@ public class Parser {
         if (match(TokenType.LEFT_BRACE)) return blockStatement();
         if (match(TokenType.IF)) return ifStatement();
         if (match(TokenType.LOOP)) return loopStatement();
+        if (match(TokenType.AT)) return returnStatement();
         return expressionStatement();
     }
 
@@ -226,13 +310,13 @@ public class Parser {
 
     private Stmt printStatement() {
         Expr value = expression();
-        consume(TokenType.EOS, "expected: newline");
+        endStatement();
         return new Stmt.Print(value);
     }
 
     private Stmt expressionStatement() {
         Expr expr = expression();
-        consume(TokenType.EOS, "expected: newline");
+        endStatement();
         return new Stmt.Expression(expr);
     }
 
@@ -253,13 +337,16 @@ public class Parser {
 
     private Stmt ifStatement() {
         Expr cond = expression();
-        consume(TokenType.LEFT_BRACE, "expected: block after condition in if statement");
+        skip(TokenType.EOS);
+        consume(TokenType.LEFT_BRACE, "exptected: block after if condition");
         Stmt ifBlock = blockStatement();
         Stmt elseBlock = null;
+        skip(TokenType.EOS);
         if (match(TokenType.ELSE)) {
+            skip(TokenType.EOS);
             if (match(TokenType.IF)) {
                 elseBlock = ifStatement();
-            } else if (match( TokenType.LEFT_BRACE)){
+            } else if (match(TokenType.LEFT_BRACE)){
                 elseBlock = blockStatement();
             } else {
                 throw error(peek(), "expected: if statement or block after <else>");
@@ -274,14 +361,26 @@ public class Parser {
         if (match(TokenType.TO)) {
             boolean incl = match(TokenType.INCL);
             Expr to = expression();
+            skip(TokenType.EOS);
             consume(TokenType.LEFT_BRACE, "exptected: block after loop head");
             Stmt body = blockStatement();
             return incl ? new Stmt.LoopRangeIncl(val, to, body) : new Stmt.LoopRange(val, to, body);
         }
 
+        skip(TokenType.EOS);
         consume(TokenType.LEFT_BRACE, "exptected: block after loop head");
         Stmt body = blockStatement();
         return new Stmt.LoopCondition(val, body);
+    }
+
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(TokenType.EOS) && !check(TokenType.RIGHT_BRACE)) {
+            value = expression();
+        }
+        endStatement();
+        return new Stmt.Return(keyword, value);
     }
 
     List<Stmt> parse() {
@@ -289,7 +388,6 @@ public class Parser {
         while (!isAtEnd()) {
             statements.add(statement());
         }
-
         return statements;
     }
 

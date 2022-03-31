@@ -1,10 +1,70 @@
 package owlery;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.function.DoubleToLongFunction;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    Interpreter() {
+        globals.assign("time", new OCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                return (double)System.currentTimeMillis() / 1000.0;
+            }
+        });
+
+        globals.assign("print", new OCallable() {
+            @Override
+            public int arity() {
+                return 1;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                System.out.println(stringify(args.get(0)));
+                return args.get(0);
+            }
+        });
+
+        globals.assign("read", new OCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                Scanner scan = new Scanner(System.in);
+                return scan.nextLine();
+            }
+        });
+
+        globals.assign("length", new OCallable() {
+            @Override
+            public int arity() {
+                return 1;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                Object arg = args.get(0);
+                if (arg instanceof String str) {
+                    return (double) str.length();
+                }
+                return 0;
+            }
+        });
+    }
 
     void interpret(List<Stmt> statements) {
         try {
@@ -53,7 +113,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object l = evaluate(expr.left);
         Object r = evaluate(expr.right);
 
-        if (expr.operator.type != TokenType.VERTICAL_BAR && expr.operator.type != TokenType.DOUBLE_VERTICAL_BAR) {
+        if (expr.operator.type != TokenType.VERTICAL_BAR
+                && expr.operator.type != TokenType.DOUBLE_VERTICAL_BAR
+                && expr.operator.type != TokenType.EQUAL
+                && expr.operator.type != TokenType.BANG_EQUAL
+
+        ) {
                 checkNumberOperands(expr.operator, l, r);
         }
         return switch (expr.operator.type) {
@@ -100,6 +165,48 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
         return environment.get(expr.name);
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+        List<Object> args = new ArrayList<>();
+        for (Expr arg : expr.arguments) {
+            args.add(evaluate(arg));
+        }
+
+        if (!(callee instanceof OCallable)) {
+            throw new RuntimeError(expr.bang, "only functions and classes can be called.");
+        }
+
+        OCallable function = (OCallable) callee;
+
+        if (args.size() != function.arity()) {
+            throw new RuntimeError(expr.bang, "expected: " + function.arity() + "arguments\nbut got " + args.size());
+        }
+
+        return function.call(this, args);
+    }
+
+    @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        return new OFunction(expr);
+    }
+
+    @Override
+    public Object visitIndexExpr(Expr.Index expr) {
+        Object value = environment.get(expr.name);
+        if (evaluate(expr.index) instanceof Double indexInDouble) {
+            int index = indexInDouble.intValue();
+            if (value instanceof String str) {
+                if (index >= 0 && index < str.length()) {
+                    return "" + str.charAt(index);
+                } else {
+                    throw new RuntimeError(expr.name, "index out of bounds for the given string");
+                }
+            }
+        }
+        return null;
     }
 
     private Object evaluate(Expr expr) {
@@ -211,6 +318,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             }
         }
         return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null) {
+            value = evaluate(stmt.value);
+        }
+
+        throw new Return(value);
     }
 
     void executeBlock(List<Stmt> statements, Environment environment) {

@@ -20,7 +20,10 @@ public class ASTGenerator {
                 "Grouping : Expr expression",
                 "Literal  : Object value",
                 "Unary    : Token operator, Expr right",
-                "Variable : Token name"
+                "Variable : Token name",
+                "Call : Expr callee, Token bang, List<Expr> arguments",
+                "Function : List<Token> params, List<Stmt> body",
+                "Index : Token name, Expr index"
         ));
 
         defineAst(outputDir, "Stmt", Arrays.asList(
@@ -31,7 +34,8 @@ public class ASTGenerator {
                 "If : Expr cond, Stmt thenBlock, Stmt elseBlock",
                 "LoopCondition : Expr condition, Stmt body",
                 "LoopRange : Expr from, Expr to, Stmt body",
-                "LoopRangeIncl : Expr from, Expr to, Stmt body_"
+                "LoopRangeIncl : Expr from, Expr to, Stmt body",
+                "Return : Token keyword, Expr value"
         ));
     }
 

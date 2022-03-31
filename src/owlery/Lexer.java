@@ -36,7 +36,7 @@ public class Lexer {
     }
 
     Lexer(String source) {
-        this.source  = source;
+        this.source = source;
         tokens = new ArrayList<>();
 
         start = 0;
@@ -65,6 +65,8 @@ public class Lexer {
             case ')' -> addToken(TokenType.RIGHT_PAREN);
             case '{' -> addToken(TokenType.LEFT_BRACE);
             case '}' -> addToken(TokenType.RIGHT_BRACE);
+            case '[' -> addToken(TokenType.LEFT_BRACKET);
+            case ']' -> addToken(TokenType.RIGHT_BRACKET);
             case ',' -> addToken(TokenType.COMMA);
             case '+' -> addToken(TokenType.PLUS);
             case '/' -> addToken(TokenType.SLASH);
@@ -80,14 +82,23 @@ public class Lexer {
             case '@' -> addToken(match('@') ? TokenType.AT_AT : TokenType.AT);
             case '<' -> addToken(match('=') ? TokenType.LESS_EQUAL : TokenType.LESS);
             case '>' -> addToken(match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
-            case '.' -> addToken(match('.') ? TokenType.DOT_DOT : TokenType.DOT);
             case ':' -> addToken(match(':') ? TokenType.COLON_COLON : TokenType.COLON);
+
+            case '.' -> {
+                if (match('.')) {
+                    if (!match('\n')) {
+                        Owlery.warning(line, "unnecessary use of <..>\nexpected: newline character after <..>");
+                    }
+                } else {
+                    addToken(TokenType.DOT);
+                }
+            }
 
             case '!' -> {
                 if (match('=')) {
                     addToken(TokenType.BANG_EQUAL);
                 } else {
-                    Owlery.error(line, "<!> operator does not exist in owlery. did you mean <not>?");
+                    addToken(TokenType.BANG);
                 }
             }
 

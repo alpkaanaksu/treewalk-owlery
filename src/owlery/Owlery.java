@@ -69,6 +69,10 @@ public class Owlery {
         }
     }
 
+    static void warning(int line, String message) {
+        System.out.println("\u001B[33m" + "warning!\n[line "+ line +"] " + message + "\u001B[0m");
+    }
+
     static void runtimeError(RuntimeError e) {
         System.err.println("\nruntime error\n[line " + e.token.line + "] " + e.getMessage());
         hadRuntimeError = true;

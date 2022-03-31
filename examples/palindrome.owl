@@ -1,0 +1,12 @@
+isPalindrome: str -> {
+    len: length! str
+    loop i: 0 to len/2 {
+        if str[i] != str[len - i - 1] {
+            @false
+        }
+    }
+    @true
+}
+
+value: read!
+print! (isPalindrome! value)

@@ -12,6 +12,7 @@ abstract class Stmt {
     R visitLoopConditionStmt(LoopCondition stmt);
     R visitLoopRangeStmt(LoopRange stmt);
     R visitLoopRangeInclStmt(LoopRangeIncl stmt);
+    R visitReturnStmt(Return stmt);
   }
   static class Expression extends Stmt {
     Expression(Expr expression) {
@@ -122,6 +123,20 @@ abstract class Stmt {
     final Expr from;
     final Expr to;
     final Stmt body;
+  }
+  static class Return extends Stmt {
+    Return(Token keyword, Expr value) {
+      this.keyword = keyword;
+      this.value = value;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitReturnStmt(this);
+    }
+
+    final Token keyword;
+    final Expr value;
   }
 
   abstract <R> R accept(Visitor<R> visitor);
