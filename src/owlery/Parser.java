@@ -26,13 +26,20 @@ public class Parser {
     private Expr assignment() {
         Expr expr = or();
 
+
         if (match(TokenType.COLON)) {
             Token colon = previous();
             Expr value = assignment();
 
-            if (expr instanceof  Expr.Variable) {
-                Token name = ((Expr.Variable)expr).name;
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
+            }
+
+            if (expr instanceof Expr.Conversion conv && conv.expression instanceof Expr.Variable var) {
+                Token name = var.name;
+                return new Expr.Define(name, value, conv.type);
+
             }
             error(colon, "invalid assignment target");
         } else if (match(TokenType.COLON_COLON)) {
@@ -47,12 +54,11 @@ public class Parser {
 
                 if (expr instanceof Expr.Variable) {
                     Token name = ((Expr.Variable) expr).name;
-                    return new Expr.Assign(name, booleanBinary ? new Expr.BooleanBinary(expr, op, operand) :new Expr.Binary(expr, op, operand));
+                    return new Expr.Assign(name, booleanBinary ? new Expr.BooleanBinary(expr, op, operand) : new Expr.Binary(expr, op, operand));
                 }
                 error(colon, "invalid assignment target");
             }
         }
-
         return expr;
     }
 
@@ -138,13 +144,37 @@ public class Parser {
         return call(); // primary();
     }
 
+
+
     private Expr call() {
-        Expr expr = primary();
+        Expr expr = conversion();
 
         if (match(TokenType.BANG)) {
             Token bang = previous();
             List<Expr> args = arguments();
             return new Expr.Call(expr, bang, args);
+        }
+
+        return expr;
+    }
+
+    private Expr conversion() {
+        Expr expr = primary();
+
+        if (match(TokenType.HASHTAG)) {
+            Token hashtag = previous();
+            Token typeToken = consume("expected: type after conversion operator '#'", TokenType.T_INTEGER, TokenType.T_STRING, TokenType.T_DOUBLE, TokenType.T_BOOLEAN, TokenType.T_LIST, TokenType.T_CALLABLE);
+            OType type = switch (typeToken.type) {
+                case T_INTEGER -> OType.Integer;
+                case T_STRING -> OType.String;
+                case T_DOUBLE -> OType.Double;
+                case T_BOOLEAN -> OType.Boolean;
+                case T_LIST -> OType.List;
+                case T_CALLABLE -> OType.Callable;
+                default -> null;
+            };
+
+            expr = new Expr.Conversion(expr, hashtag, type);
         }
 
         return expr;
@@ -168,7 +198,7 @@ public class Parser {
         if (match(TokenType.TRUE)) return new Expr.Literal(true);
         if (match(TokenType.NOTHING)) return new Expr.Literal(null);
 
-        if (match(TokenType.NUMBER, TokenType.STRING)) {
+        if (match(TokenType.DOUBLE, TokenType.INTEGER, TokenType.STRING)) {
             return new Expr.Literal(previous().literal);
         }
 
@@ -253,6 +283,13 @@ public class Parser {
 
     private Token consume(TokenType type, String message) {
         if(check(type)) return advance();
+        throw error(peek(), message);
+    }
+
+    private Token consume(String message, TokenType... types) {
+        for (TokenType type : types) {
+            if (check(type)) return advance();
+        }
         throw error(peek(), message);
     }
 
@@ -364,7 +401,7 @@ public class Parser {
             skip(TokenType.EOS);
             consume(TokenType.LEFT_BRACE, "exptected: block after loop head");
             Stmt body = blockStatement();
-            return incl ? new Stmt.LoopRangeIncl(val, to, body) : new Stmt.LoopRange(val, to, body);
+            return new Stmt.LoopRange(val, to, body, incl);
         }
 
         skip(TokenType.EOS);

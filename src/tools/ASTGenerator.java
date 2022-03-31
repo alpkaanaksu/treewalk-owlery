@@ -14,6 +14,7 @@ public class ASTGenerator {
         String outputDir = args[0];
 
         defineAst(outputDir, "Expr", Arrays.asList(
+                "Define : Token name, Expr value, OType type",
                 "Assign : Token name, Expr value",
                 "BooleanBinary : Expr left, Token operator, Expr right",
                 "Binary   : Expr left, Token operator, Expr right",
@@ -23,7 +24,8 @@ public class ASTGenerator {
                 "Variable : Token name",
                 "Call : Expr callee, Token bang, List<Expr> arguments",
                 "Function : List<Token> params, List<Stmt> body",
-                "Index : Token name, Expr index"
+                "Index : Token name, Expr index",
+                "Conversion : Expr expression, Token hashtag, OType type"
         ));
 
         defineAst(outputDir, "Stmt", Arrays.asList(
@@ -33,8 +35,7 @@ public class ASTGenerator {
                 "Block : List<Stmt> statements",
                 "If : Expr cond, Stmt thenBlock, Stmt elseBlock",
                 "LoopCondition : Expr condition, Stmt body",
-                "LoopRange : Expr from, Expr to, Stmt body",
-                "LoopRangeIncl : Expr from, Expr to, Stmt body",
+                "LoopRange : Expr from, Expr to, Stmt body, boolean incl",
                 "Return : Token keyword, Expr value"
         ));
     }

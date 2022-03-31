@@ -1,0 +1,3 @@
+a #integer: 5
+a: "asd"
+print! a

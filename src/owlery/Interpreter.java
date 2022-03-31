@@ -3,7 +3,6 @@ package owlery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.function.DoubleToLongFunction;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
@@ -11,7 +10,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private Environment environment = globals;
 
     Interpreter() {
-        globals.assign("time", new OCallable() {
+        globals.define("time", new OCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -21,9 +20,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             public Object call(Interpreter interpreter, List<Object> args) {
                 return (double)System.currentTimeMillis() / 1000.0;
             }
-        });
+        }, OType.Callable);
 
-        globals.assign("print", new OCallable() {
+        globals.define("print", new OCallable() {
             @Override
             public int arity() {
                 return 1;
@@ -34,9 +33,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 System.out.println(stringify(args.get(0)));
                 return args.get(0);
             }
-        });
+        }, OType.Callable);
 
-        globals.assign("read", new OCallable() {
+        globals.define("read", new OCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -47,9 +46,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 Scanner scan = new Scanner(System.in);
                 return scan.nextLine();
             }
-        });
+        }, OType.Callable);
 
-        globals.assign("length", new OCallable() {
+        globals.define("length", new OCallable() {
             @Override
             public int arity() {
                 return 1;
@@ -59,11 +58,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             public Object call(Interpreter interpreter, List<Object> args) {
                 Object arg = args.get(0);
                 if (arg instanceof String str) {
-                    return (double) str.length();
+                    return str.length();
                 }
                 return 0;
             }
-        });
+        }, OType.Callable);
     }
 
     void interpret(List<Stmt> statements) {
@@ -78,21 +77,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private String stringify(Object object) {
         if (object == null) return "nothing";
-        if (object instanceof Double) {
-            String text = object.toString();
-            if (text.endsWith(".0")) {
-                text = text.substring(0, text.length() - 2);
-            }
-            return text;
-        }
-
         return object.toString();
+    }
+
+    @Override
+    public Object visitDefineExpr(Expr.Define expr) {
+        environment.define(expr.name, evaluate(expr.value), expr.type);
+        return null;
     }
 
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-        environment.assign(expr.name.lexeme, value);
+        environment.assign(expr.name, value);
         return value;
     }
 
@@ -121,22 +118,183 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         ) {
                 checkNumberOperands(expr.operator, l, r);
         }
-        return switch (expr.operator.type) {
-            case EQUAL -> isEqual(l, r);
-            case BANG_EQUAL -> !isEqual(l, r);
-            case GREATER -> (double) l > (double) r;
-            case GREATER_EQUAL -> (double) l >= (double) r;
-            case LESS -> (double) l < (double) r;
-            case LESS_EQUAL -> (double) l <= (double) r;
-            case MINUS -> (double) l - (double) r;
-            case SLASH -> (double) l / (double) r;
-            case STAR -> (double) l * (double) r;
-            case PERCENT -> (double) l % (double) r;
-            case PLUS -> (double) l + (double) r;
-            case VERTICAL_BAR -> stringify(l) + stringify(r);
-            case DOUBLE_VERTICAL_BAR -> stringify(l) + " " + stringify(r);
-            default -> null;
+        switch (expr.operator.type) {
+            case EQUAL -> {
+                return isEqual(l, r);
+            }
+            case BANG_EQUAL -> {
+                return !isEqual(l, r);
+            }
+            case GREATER -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l > (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l > (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l > (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l > (int) r;
+                }
+            }
+            case GREATER_EQUAL -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l >= (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l >= (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l >= (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l >= (int) r;
+                }
+            }
+            case LESS -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l < (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l < (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l < (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l < (int) r;
+                }
+            }
+            case LESS_EQUAL -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l <= (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l <= (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l <= (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l <= (int) r;
+                }
+            }
+            case MINUS -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l - (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l - (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l - (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l - (int) r;
+                }
+            }
+            case SLASH -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l / (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l / (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l / (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l / (int) r;
+                }
+            }
+            case STAR -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l * (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l * (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l * (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l * (int) r;
+                }
+            }
+            case PERCENT -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l % (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l % (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l % (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l % (int) r;
+                }
+            }
+            case PLUS -> {
+                checkNumberOperands(expr.operator, l, r);
+                if (l instanceof Integer && r instanceof Integer) {
+                    return (int) l + (int) r;
+                }
+
+                if (l instanceof Double && r instanceof Double) {
+                    return (double) l + (double) r;
+                }
+
+                if (l instanceof Integer && r instanceof Double) {
+                    return (int) l + (double) r;
+                }
+
+                if (l instanceof Double && r instanceof Integer) {
+                    return (double) l + (int) r;
+                }
+            }
+            case VERTICAL_BAR -> {
+                return stringify(l) + stringify(r);
+            }
+            case DOUBLE_VERTICAL_BAR -> {
+                return stringify(l) + " " + stringify(r);
+            }
         };
+        return null;
     }
 
     @Override
@@ -164,7 +322,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name);
+        return environment.get(expr.name).value;
     }
 
     @Override
@@ -195,15 +353,73 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitIndexExpr(Expr.Index expr) {
-        Object value = environment.get(expr.name);
-        if (evaluate(expr.index) instanceof Double indexInDouble) {
-            int index = indexInDouble.intValue();
+        Object value = environment.get(expr.name).value;
+        if (evaluate(expr.index) instanceof Integer indexInInt) {
+            int index = indexInInt.intValue();
             if (value instanceof String str) {
                 if (index >= 0 && index < str.length()) {
                     return "" + str.charAt(index);
                 } else {
                     throw new RuntimeError(expr.name, "index out of bounds for the given string");
                 }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitConversionExpr(Expr.Conversion expr) {
+        switch (expr.type) {
+            case String -> {
+                return stringify(evaluate(expr.expression));
+            }
+
+            case Integer -> {
+                if (evaluate(expr.expression) instanceof String s) {
+                    try {
+                        return Integer.parseInt(s);
+                    } catch (NumberFormatException e) {
+                        throw new RuntimeError(expr.hashtag, "given string can not be converted to an integer");
+                    }
+                }
+
+                if (evaluate(expr.expression) instanceof Double d) {
+                    return d.intValue();
+                }
+
+                if (evaluate(expr.expression) instanceof Integer i) {
+                    return i;
+                }
+
+                if (evaluate(expr.expression) instanceof Boolean b) {
+                    return b ? 1 : 0;
+                }
+            }
+
+            case Double -> {
+                if (evaluate(expr.expression) instanceof String s) {
+                    try {
+                        return Double.parseDouble(s);
+                    } catch (NumberFormatException e) {
+                        throw new RuntimeError(expr.hashtag, "given string can not be converted to an integer");
+                    }
+                }
+
+                if (evaluate(expr.expression) instanceof Double d) {
+                    return d;
+                }
+
+                if (evaluate(expr.expression) instanceof Integer i) {
+                    return (double) i;
+                }
+
+                if (evaluate(expr.expression) instanceof Boolean b) {
+                    return b ? 1.0 : 0.0;
+                }
+            }
+
+            case Boolean -> {
+                return isTruthy(evaluate(expr.expression));
             }
         }
         return null;
@@ -218,12 +434,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     private void checkNumberOperand(Token operator, Object operand) {
-        if (operand instanceof Double) return;
+        if (operand instanceof Number) return;
         throw new RuntimeError(operator, "operand must be a number.");
     }
 
     private void checkNumberOperands(Token operator, Object operand1, Object operand2) {
-        if (operand1 instanceof Double && operand2 instanceof Double) return;
+        if (operand1 instanceof Number && operand2 instanceof Number) return;
         throw new RuntimeError(operator, "both operands must be numbers.");
     }
 
@@ -231,6 +447,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (object == null) return false;
         if (object instanceof Boolean) return (boolean) object;
         if (object instanceof Double num && num.equals(0)) return false;
+        if (object instanceof Integer num && num.equals(0)) return false;
+        if (object instanceof String s && s.isEmpty()) return false;
         return true;
     }
 
@@ -287,32 +505,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitLoopRangeStmt(Stmt.LoopRange stmt) {
         if (stmt.from instanceof Expr.Assign assignment) {
-            environment.assign(assignment.name.lexeme, evaluate(assignment.value));
-            while((double) environment.get(assignment.name) < (double) evaluate(stmt.to)) {
+            environment.define(assignment.name.lexeme, evaluate(assignment.value), OType.Integer);
+            while((int) environment.get(assignment.name).value < (int) evaluate(stmt.to) + (stmt.incl ? 1 : 0)) {
                 execute(stmt.body);
-                environment.assign(assignment.name.lexeme, (double) environment.get(assignment.name) + 1);
+                environment.assign(assignment.name, (int) environment.get(assignment.name).value+ 1);
             }
         } else {
-            double from = (double) evaluate(stmt.from);
-            while (from < (double) evaluate(stmt.to)) {
-                execute(stmt.body);
-                from = from + 1;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public Void visitLoopRangeInclStmt(Stmt.LoopRangeIncl stmt) {
-        if (stmt.from instanceof Expr.Assign assignment) {
-            environment.assign(assignment.name.lexeme, evaluate(assignment.value));
-            while((double) environment.get(assignment.name) <= (double) evaluate(stmt.to)) {
-                execute(stmt.body);
-                environment.assign(assignment.name.lexeme, (double) environment.get(assignment.name) + 1);
-            }
-        } else {
-            double from = (double) evaluate(stmt.from);
-            while (from <= (double) evaluate(stmt.to)) {
+            int from = (int) evaluate(stmt.from);
+            while (from < (int) evaluate(stmt.to)) {
                 execute(stmt.body);
                 from = from + 1;
             }

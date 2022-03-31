@@ -19,7 +19,7 @@ public class OFunction implements OCallable {
         Environment environment = new Environment(interpreter.globals);
         int argCount = 0;
         for (Token param : function.params) {
-            environment.assign(param.lexeme, args.get(argCount++));
+            environment.define(param, args.get(argCount++), OType.Flexible);
         }
         try {
             interpreter.executeBlock(function.body, environment);

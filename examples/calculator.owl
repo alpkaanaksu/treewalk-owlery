@@ -1,0 +1,22 @@
+add #callable: a b -> { @a+b }
+sub #callable: a b -> { @a-b }
+mul #callable: a b -> { @a*b }
+div #callable: a b -> { @a/b }
+
+op #integer: (read!)#integer
+o1 #integer: (read!)#integer
+o2 #integer: (read!)#integer
+
+if op = 1 {
+    print! add! o1 o2
+}
+
+if op = 2 {
+    print! sub! o1 o2
+}
+if op = 3 {
+    print! mul! o1 o2
+}
+if op = 4 {
+    print! div! o1 o2
+}

@@ -4,6 +4,7 @@ import java.util.List;
 
 abstract class Expr {
   interface Visitor<R> {
+    R visitDefineExpr(Define expr);
     R visitAssignExpr(Assign expr);
     R visitBooleanBinaryExpr(BooleanBinary expr);
     R visitBinaryExpr(Binary expr);
@@ -14,6 +15,23 @@ abstract class Expr {
     R visitCallExpr(Call expr);
     R visitFunctionExpr(Function expr);
     R visitIndexExpr(Index expr);
+    R visitConversionExpr(Conversion expr);
+  }
+  static class Define extends Expr {
+    Define(Token name, Expr value, OType type) {
+      this.name = name;
+      this.value = value;
+      this.type = type;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitDefineExpr(this);
+    }
+
+    final Token name;
+    final Expr value;
+    final OType type;
   }
   static class Assign extends Expr {
     Assign(Token name, Expr value) {
@@ -154,6 +172,22 @@ abstract class Expr {
 
     final Token name;
     final Expr index;
+  }
+  static class Conversion extends Expr {
+    Conversion(Expr expression, Token hashtag, OType type) {
+      this.expression = expression;
+      this.hashtag = hashtag;
+      this.type = type;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitConversionExpr(this);
+    }
+
+    final Expr expression;
+    final Token hashtag;
+    final OType type;
   }
 
   abstract <R> R accept(Visitor<R> visitor);

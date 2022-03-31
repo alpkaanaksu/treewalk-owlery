@@ -11,7 +11,6 @@ abstract class Stmt {
     R visitIfStmt(If stmt);
     R visitLoopConditionStmt(LoopCondition stmt);
     R visitLoopRangeStmt(LoopRange stmt);
-    R visitLoopRangeInclStmt(LoopRangeIncl stmt);
     R visitReturnStmt(Return stmt);
   }
   static class Expression extends Stmt {
@@ -93,10 +92,11 @@ abstract class Stmt {
     final Stmt body;
   }
   static class LoopRange extends Stmt {
-    LoopRange(Expr from, Expr to, Stmt body) {
+    LoopRange(Expr from, Expr to, Stmt body, boolean incl) {
       this.from = from;
       this.to = to;
       this.body = body;
+      this.incl = incl;
     }
 
     @Override
@@ -107,22 +107,7 @@ abstract class Stmt {
     final Expr from;
     final Expr to;
     final Stmt body;
-  }
-  static class LoopRangeIncl extends Stmt {
-    LoopRangeIncl(Expr from, Expr to, Stmt body) {
-      this.from = from;
-      this.to = to;
-      this.body = body;
-    }
-
-    @Override
-    <R> R accept(Visitor<R> visitor) {
-      return visitor.visitLoopRangeInclStmt(this);
-    }
-
-    final Expr from;
-    final Expr to;
-    final Stmt body;
+    final boolean incl;
   }
   static class Return extends Stmt {
     Return(Token keyword, Expr value) {

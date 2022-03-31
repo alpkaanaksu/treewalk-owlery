@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="treewalk-owlery:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/treewalk_owlery_jar</output-path>
+    <root id="archive" name="treewalk-owlery.jar">
+      <element id="module-output" name="treewalk-owlery" />
+    </root>
+  </artifact>
+</component>

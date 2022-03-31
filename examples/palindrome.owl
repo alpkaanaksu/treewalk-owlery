@@ -1,5 +1,5 @@
-isPalindrome: str -> {
-    len: length! str
+isPalindrome #callable: str -> {
+    len #integer: length! str
     loop i: 0 to len/2 {
         if str[i] != str[len - i - 1] {
             @false
@@ -8,5 +8,5 @@ isPalindrome: str -> {
     @true
 }
 
-value: read!
+value #string: read!
 print! (isPalindrome! value)

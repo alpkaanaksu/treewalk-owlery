@@ -32,6 +32,16 @@ public class Lexer {
         keywords.put("false", TokenType.FALSE);
         keywords.put("hoot", TokenType.PRINT);
         keywords.put("incl", TokenType.INCL);
+        keywords.put("integer", TokenType.T_INTEGER);
+        keywords.put("double", TokenType.T_DOUBLE);
+        keywords.put("string", TokenType.T_STRING);
+        keywords.put("boolean", TokenType.T_BOOLEAN);
+        keywords.put("list", TokenType.T_LIST);
+        keywords.put("callable", TokenType.T_CALLABLE);
+
+
+
+
 
     }
 
@@ -73,6 +83,8 @@ public class Lexer {
             case '*' -> addToken(TokenType.STAR);
             case '%' -> addToken(TokenType.PERCENT);
             case '=' -> addToken(TokenType.EQUAL);
+            case '#' -> addToken(TokenType.HASHTAG);
+
             case '\n' -> {
                 addToken(TokenType.EOS);
                 line++;
@@ -200,9 +212,10 @@ public class Lexer {
         if (peek(0) == '.' && isDigit(peek(1))) {
             advance();
             while (isDigit(peek(0))) advance();
+            addToken(TokenType.DOUBLE, Double.parseDouble(source.substring(start, current)));
+            return;
         }
-
-        addToken(TokenType.NUMBER, Double.parseDouble(source.substring(start, current)));
+        addToken(TokenType.INTEGER, Integer.parseInt(source.substring(start, current)));
     }
 
     private void identifier() {

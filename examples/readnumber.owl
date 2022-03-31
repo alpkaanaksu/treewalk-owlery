@@ -1,0 +1,2 @@
+input #integer: (read!)#integer
+print! "number:" || input

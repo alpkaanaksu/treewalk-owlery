@@ -1,0 +1,27 @@
+print! "Boolean"
+print! true || "is" || true#integer
+print! true || "is" || true#double
+print! true || "is" || true#string
+print! true || "is" || true#boolean
+print! false || "is" || false#integer
+print! false || "is" || false#double
+print! false || "is" || false#string
+print! false || "is" || false#boolean
+print! ""
+print! "Integer"
+print! 1256 || "is" || 1256#integer
+print! 1256 || "is" || 1256#double
+print! 1256 || "is" || 1256#string
+print! 1256 || "is" || 1256#boolean
+print! ""
+print! "Double"
+print! 1256.1256 || "is" || 1256.1256#integer
+print! 1256.1256 || "is" || 1256.1256#double
+print! 1256.1256 || "is" || 1256.1256#string
+print! 1256.1256 || "is" || 1256.1256#boolean
+print! ""
+print! "String"
+print! "'1256'" || "is" || "1256"#integer
+print! "'1256'" || "is" || "1256"#double
+print! "'1256'" || "is" || "1256"#string
+print! "'1256'" || "is" || "1256"#boolean
