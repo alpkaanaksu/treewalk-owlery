@@ -5,7 +5,7 @@
 
 main #callable: args -> {
     print! recognizer! prompt! ">"
-    -- print(recognizer(read()))
+    -- print(recognizer(prompt(">")))
 }
 
 recognizer #callable: word -> {
