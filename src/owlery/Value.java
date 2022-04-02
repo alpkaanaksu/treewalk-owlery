@@ -23,4 +23,16 @@ public class Value {
             case Flexible -> true;
         };
     }
+
+    public boolean is (OType type) {
+        return switch (type) {
+            case Integer -> value instanceof Integer;
+            case Double -> value instanceof Double;
+            case String -> value instanceof String;
+            case Boolean -> value instanceof Boolean;
+            case List -> value instanceof List<?>;
+            case Callable -> value instanceof OCallable;
+            case Flexible -> true;
+        };
+    }
 }

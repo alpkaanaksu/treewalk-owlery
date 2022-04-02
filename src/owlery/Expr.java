@@ -15,7 +15,7 @@ abstract class Expr {
     R visitCallExpr(Call expr);
     R visitFunctionExpr(Function expr);
     R visitIndexExpr(Index expr);
-    R visitConversionExpr(Conversion expr);
+    R visitTypeBinaryExpr(TypeBinary expr);
   }
   static class Define extends Expr {
     Define(Token name, Expr value, OType type) {
@@ -173,20 +173,20 @@ abstract class Expr {
     final Token name;
     final Expr index;
   }
-  static class Conversion extends Expr {
-    Conversion(Expr expression, Token hashtag, OType type) {
+  static class TypeBinary extends Expr {
+    TypeBinary(Expr expression, Token op, OType type) {
       this.expression = expression;
-      this.hashtag = hashtag;
+      this.op = op;
       this.type = type;
     }
 
     @Override
     <R> R accept(Visitor<R> visitor) {
-      return visitor.visitConversionExpr(this);
+      return visitor.visitTypeBinaryExpr(this);
     }
 
     final Expr expression;
-    final Token hashtag;
+    final Token op;
     final OType type;
   }
 

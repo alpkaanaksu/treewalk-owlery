@@ -70,6 +70,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             for (Stmt statement : statements) {
                 execute(statement);
             }
+            Value mainFunction = environment.get("main");
+
+            if (mainFunction != null && mainFunction.value instanceof OFunction fun ) {
+                fun.call(this, List.of(0));
+            }
         } catch (RuntimeError e) {
             Owlery.runtimeError(e);
         }
@@ -368,58 +373,66 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitConversionExpr(Expr.Conversion expr) {
-        switch (expr.type) {
-            case String -> {
-                return stringify(evaluate(expr.expression));
-            }
+    public Object visitTypeBinaryExpr(Expr.TypeBinary expr) {
+        switch (expr.op.type) {
+            case HASHTAG -> {
+                switch (expr.type) {
+                    case String -> {
+                        return stringify(evaluate(expr.expression));
+                    }
 
-            case Integer -> {
-                if (evaluate(expr.expression) instanceof String s) {
-                    try {
-                        return Integer.parseInt(s);
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeError(expr.hashtag, "given string can not be converted to an integer");
+                    case Integer -> {
+                        if (evaluate(expr.expression) instanceof String s) {
+                            try {
+                                return Integer.parseInt(s);
+                            } catch (NumberFormatException e) {
+                                throw new RuntimeError(expr.op, "given string can not be converted to an integer");
+                            }
+                        }
+
+                        if (evaluate(expr.expression) instanceof Double d) {
+                            return d.intValue();
+                        }
+
+                        if (evaluate(expr.expression) instanceof Integer i) {
+                            return i;
+                        }
+
+                        if (evaluate(expr.expression) instanceof Boolean b) {
+                            return b ? 1 : 0;
+                        }
+                    }
+
+                    case Double -> {
+                        if (evaluate(expr.expression) instanceof String s) {
+                            try {
+                                return Double.parseDouble(s);
+                            } catch (NumberFormatException e) {
+                                throw new RuntimeError(expr.op, "given string can not be converted to an integer");
+                            }
+                        }
+
+                        if (evaluate(expr.expression) instanceof Double d) {
+                            return d;
+                        }
+
+                        if (evaluate(expr.expression) instanceof Integer i) {
+                            return (double) i;
+                        }
+
+                        if (evaluate(expr.expression) instanceof Boolean b) {
+                            return b ? 1.0 : 0.0;
+                        }
+                    }
+
+                    case Boolean -> {
+                        return isTruthy(evaluate(expr.expression));
                     }
                 }
-
-                if (evaluate(expr.expression) instanceof Double d) {
-                    return d.intValue();
-                }
-
-                if (evaluate(expr.expression) instanceof Integer i) {
-                    return i;
-                }
-
-                if (evaluate(expr.expression) instanceof Boolean b) {
-                    return b ? 1 : 0;
-                }
             }
 
-            case Double -> {
-                if (evaluate(expr.expression) instanceof String s) {
-                    try {
-                        return Double.parseDouble(s);
-                    } catch (NumberFormatException e) {
-                        throw new RuntimeError(expr.hashtag, "given string can not be converted to an integer");
-                    }
-                }
-
-                if (evaluate(expr.expression) instanceof Double d) {
-                    return d;
-                }
-
-                if (evaluate(expr.expression) instanceof Integer i) {
-                    return (double) i;
-                }
-
-                if (evaluate(expr.expression) instanceof Boolean b) {
-                    return b ? 1.0 : 0.0;
-                }
-            }
-
-            case Boolean -> {
-                return isTruthy(evaluate(expr.expression));
+            case IS -> {
+                return new Value(OType.Flexible, evaluate(expr.expression)).is(expr.type);
             }
         }
         return null;

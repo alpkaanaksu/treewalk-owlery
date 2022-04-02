@@ -38,11 +38,7 @@ public class Lexer {
         keywords.put("boolean", TokenType.T_BOOLEAN);
         keywords.put("list", TokenType.T_LIST);
         keywords.put("callable", TokenType.T_CALLABLE);
-
-
-
-
-
+        keywords.put("is", TokenType.IS);
     }
 
     Lexer(String source) {

@@ -1,0 +1,21 @@
+main #callable: args -> {
+    values! nothing 5
+    values! "this is a string" 5
+    values! 5 5
+}
+
+values #callable: str num -> {
+    -- null check first
+    if not str {
+        print! "i have nothing!!!"
+        @false
+    }
+
+    if str is string and num is integer {
+        print! "i like these values!"
+        @true
+    }
+
+    print! "i hate you!"
+    @false
+}

@@ -1,0 +1,20 @@
+main #callable: args -> {
+    print! "size of your triangle?"
+    size #integer: (read!)#integer
+    triangle! size
+}
+
+line #callable: n -> {
+    linestr #string: ""
+    loop 0 to n {
+        linestr :: | "*"
+    }
+    @linestr
+}
+
+triangle #callable: n -> {
+    if n = 0 { @ }
+
+    triangle! n-1
+    print! line! n
+}

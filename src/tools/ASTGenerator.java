@@ -25,7 +25,7 @@ public class ASTGenerator {
                 "Call : Expr callee, Token bang, List<Expr> arguments",
                 "Function : List<Token> params, List<Stmt> body",
                 "Index : Token name, Expr index",
-                "Conversion : Expr expression, Token hashtag, OType type"
+                "TypeBinary : Expr expression, Token op, OType type"
         ));
 
         defineAst(outputDir, "Stmt", Arrays.asList(

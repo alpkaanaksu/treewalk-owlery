@@ -1,0 +1,51 @@
+-- This program implements a DFA.
+-- state 0: b: 0, a: 1
+-- state 1: b: 2, a: 1
+-- state 2: b: 2, a: 2
+
+main #callable: args -> {
+    print! recognizer! read!
+}
+
+recognizer #callable: word -> {
+    if not (word is string) or ..
+       not checkAlphabet! word
+    {
+        print! "can not proceed due to an error"
+        @false
+    }
+
+    state #callable: s0
+    loop i: 0 to (length! word) {
+        state: state! word[i]
+    }
+
+    @ (state! nothing)
+}
+
+s0 #callable: symbol -> {
+    if symbol = nothing { @false }
+    if symbol = "b" { @s0 }
+    else if symbol = "a" { @s1 }
+}
+
+s1 #callable: symbol -> {
+    if symbol = nothing { @false }
+    if symbol = "b" { @s2 }
+    else if symbol = "a" { @s1 }
+}
+
+s2 #callable: symbol -> {
+    if symbol = nothing { @true }
+    if symbol = "b" or symbol = "a" { @s2 }
+}
+
+checkAlphabet #callable: word -> {
+    loop i: 0 to (length! word) {
+        current #string: word[i]
+        if current != "a" and current != "b" {
+            @false
+        }
+    }
+    @true
+}

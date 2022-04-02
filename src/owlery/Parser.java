@@ -36,7 +36,7 @@ public class Parser {
                 return new Expr.Assign(name, value);
             }
 
-            if (expr instanceof Expr.Conversion conv && conv.expression instanceof Expr.Variable var) {
+            if (expr instanceof Expr.TypeBinary conv && conv.op.type == TokenType.HASHTAG &&conv.expression instanceof Expr.Variable var) {
                 Token name = var.name;
                 return new Expr.Define(name, value, conv.type);
 
@@ -147,7 +147,7 @@ public class Parser {
 
 
     private Expr call() {
-        Expr expr = conversion();
+        Expr expr = type();
 
         if (match(TokenType.BANG)) {
             Token bang = previous();
@@ -158,23 +158,33 @@ public class Parser {
         return expr;
     }
 
-    private Expr conversion() {
+    private OType typeFromToken(Token token) {
+        return switch (token.type) {
+            case T_INTEGER -> OType.Integer;
+            case T_STRING -> OType.String;
+            case T_DOUBLE -> OType.Double;
+            case T_BOOLEAN -> OType.Boolean;
+            case T_LIST -> OType.List;
+            case T_CALLABLE -> OType.Callable;
+            default -> OType.Flexible;
+        };
+    }
+
+    private Expr type() {
         Expr expr = primary();
+
+        if (match(TokenType.IS)) {
+            Token is = previous();
+            Token typeToken = consume("expected: type after 'is'", TokenType.T_INTEGER, TokenType.T_STRING, TokenType.T_DOUBLE, TokenType.T_BOOLEAN, TokenType.T_LIST, TokenType.T_CALLABLE);
+            OType type = typeFromToken(typeToken);
+            expr = new Expr.TypeBinary(expr, is, type);
+        }
 
         if (match(TokenType.HASHTAG)) {
             Token hashtag = previous();
             Token typeToken = consume("expected: type after conversion operator '#'", TokenType.T_INTEGER, TokenType.T_STRING, TokenType.T_DOUBLE, TokenType.T_BOOLEAN, TokenType.T_LIST, TokenType.T_CALLABLE);
-            OType type = switch (typeToken.type) {
-                case T_INTEGER -> OType.Integer;
-                case T_STRING -> OType.String;
-                case T_DOUBLE -> OType.Double;
-                case T_BOOLEAN -> OType.Boolean;
-                case T_LIST -> OType.List;
-                case T_CALLABLE -> OType.Callable;
-                default -> null;
-            };
-
-            expr = new Expr.Conversion(expr, hashtag, type);
+            OType type = typeFromToken(typeToken);
+            expr = new Expr.TypeBinary(expr, hashtag, type);
         }
 
         return expr;

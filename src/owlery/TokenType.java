@@ -15,7 +15,6 @@ public enum TokenType {
     AT, AT_AT,
     ARROW,
     DOT,
-    DOT_DOT,
 
     IDENTIFIER, STRING, NUMBER, INTEGER, DOUBLE, BOOLEAN,
 
@@ -24,7 +23,7 @@ public enum TokenType {
     BIT_AND, BIT_OR, BIT_XOR, BIT_NOT,
     RETURN,
     IF, ELSE,
-    LOOP, TO, INCL, IN,
+    LOOP, TO, INCL, IN, IS,
     NOTHING, TRUE, FALSE,
     PRINT,
 
