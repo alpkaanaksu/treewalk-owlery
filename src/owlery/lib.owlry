@@ -1,0 +1,30 @@
+prompt #callable: str -> {
+    if not (str is string) {
+        error! "prompt should be a string."
+        @nothing
+    }
+
+    printnl! str | " "
+    @read!
+}
+
+promptns #callable: str -> {
+    if not (str is string) {
+        error! "prompt should be a string."
+        @nothing
+    }
+
+    printnl! str
+    @read!
+}
+
+reversed #callable: thing -> {
+    if thing is string {
+        result #string: ""
+        loop i: 0 to (length! thing) {
+            result :: | thing[(length! thing) - 1 - i]
+        }
+        @result
+    }
+    error! "function 'reversed' expects a string as an argument."
+}

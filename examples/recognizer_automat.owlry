@@ -4,7 +4,8 @@
 -- state 2: b: 2, a: 2
 
 main #callable: args -> {
-    print! recognizer! read!
+    print! recognizer! prompt! ">"
+    -- print(recognizer(read()))
 }
 
 recognizer #callable: word -> {
@@ -26,13 +27,13 @@ recognizer #callable: word -> {
 s0 #callable: symbol -> {
     if symbol = nothing { @false }
     if symbol = "b" { @s0 }
-    else if symbol = "a" { @s1 }
+    if symbol = "a" { @s1 }
 }
 
 s1 #callable: symbol -> {
     if symbol = nothing { @false }
     if symbol = "b" { @s2 }
-    else if symbol = "a" { @s1 }
+    if symbol = "a" { @s1 }
 }
 
 s2 #callable: symbol -> {

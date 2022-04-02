@@ -1,8 +1,10 @@
 package owlery;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -74,7 +76,11 @@ public class Owlery {
     }
 
     static void runtimeError(RuntimeError e) {
-        System.err.println("\nruntime error\n[line " + e.token.line + "] " + e.getMessage());
+        if (e.token != null) {
+            System.err.println("\nruntime error\n[line " + e.token.line + "] " + e.getMessage());
+        } else {
+            System.err.println("\nruntime error\n" + e.getMessage());
+        }
         hadRuntimeError = true;
     }
 

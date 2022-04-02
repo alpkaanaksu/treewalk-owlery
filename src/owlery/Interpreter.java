@@ -1,5 +1,10 @@
 package owlery;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -10,6 +15,33 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private Environment environment = globals;
 
     Interpreter() {
+        try {
+            URL url = Owlery.class.getResource("lib.owlry");
+            File lib = new File(url.getPath());
+            byte[] libBytes = Files.readAllBytes(lib.toPath());
+            Lexer lexer = new Lexer(new String(libBytes, Charset.defaultCharset()));
+            List<Token> tokens = lexer.scanTokens();
+            Parser parser = new Parser(tokens);
+            List<Stmt> statements = parser.parse();
+            interpret(statements);
+        } catch (IOException e) {
+
+        }
+
+        globals.define("error", new OCallable() {
+            @Override
+            public int arity() {
+                return 1;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                if (args.get(0) instanceof String str)
+                    throw new RuntimeError("[lib] " + str);
+                return null;
+            }
+        }, OType.Callable);
+
         globals.define("time", new OCallable() {
             @Override
             public int arity() {
@@ -31,6 +63,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             @Override
             public Object call(Interpreter interpreter, List<Object> args) {
                 System.out.println(stringify(args.get(0)));
+                return args.get(0);
+            }
+        }, OType.Callable);
+
+        globals.define("printnl", new OCallable() {
+            @Override
+            public int arity() {
+                return 1;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> args) {
+                System.out.print(stringify(args.get(0)));
                 return args.get(0);
             }
         }, OType.Callable);
